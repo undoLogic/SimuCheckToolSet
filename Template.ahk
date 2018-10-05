@@ -4,12 +4,8 @@ global NAME := "TS2018-166"
 #Include SimuCheckToolSet_Lib.ahk
 ; Created by Simucheck / undoLogic.com / Sacha Lewis Dmytruk
 ; liscense coming soon...
-; If you are interested to white-label our product please contact us
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 
-; MsgBox, Brought to you by www.SimuCheck.com - Thank you for supporting us !
-
-;ComObjCreate("SAPI.SpVoice").Speak("Simucheck.com")
 ComObjCreate("SAPI.SpVoice").Speak("1 6 6")
 
 ; #Warn  ; Enable warnings to assist with detecting common errors.
