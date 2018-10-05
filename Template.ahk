@@ -3,7 +3,7 @@
 global NAME := "TS2018-166"
 #Include SimuCheckToolSet_Lib.ahk
 ; Created by Simucheck / undoLogic.com / Sacha Lewis Dmytruk
-; liscense coming soon...
+; license coming soon...
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 
 ComObjCreate("SAPI.SpVoice").Speak("1 6 6")
@@ -14,9 +14,9 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 SetFormat, float, 03  ; Omit decimal point from axis position percentages.
 DEBUG = FALSE
 ; empty the log file
-global JoystickNumber := 3
-
 deleteLog()
+
+global JoystickNumber := 3
 
 writeToLog("Starting 1 6 6", True)
 Loop                                                                        
