@@ -544,6 +544,68 @@ moveMouse(X_to, Y_to) {
 	}	
 }
 
+
+PushMouseRightBeforeAndAfter(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
+	global ACTUAL
+	; unique number to store the current state
+	INDEX := JOY AXIS
+	act := ACTUAL[INDEX]
+
+	GetKeyState, state, %JOY%joy%AXIS%
+	; ToolTip, state %state% actual %ACTUAL% x %X_to% y %Y_to% backX %X_to% backy %Y_to%
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, 
+			Send, {RButton Down}
+			Sleep, 100
+			Send, {RButton Up}
+			Sleep, 100
+			moveMouse(X_to, Y_to)
+            ;MouseMove, %X_to%, %Y_to%, , R
+			;DllCall("mouse_event", int, 0x0001, int, X_to, int, Y_to)
+           
+		   	Sleep, 100
+		   	Send, {RButton Down}
+			Sleep, 100
+			Send, {RButton Up}
+			Sleep, 100
+
+			message := "Button-Mouse index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+			ACTUAL[INDEX] := state
+		} else if (state = "U") {
+			; MsgBox, 
+			Send, {RButton Down}
+			Sleep, 100
+			Send, {RButton Up}
+			Sleep, 100
+
+			moveMouse(X_back, Y_back)
+            ;MouseMove, %X_back%, %Y_back%, , R
+			;.
+			;DllCall("mouse_event", int, 0x0001, int, X_back, int, Y_back)
+            Sleep, 100
+			Send, {RButton Down}
+			Sleep, 100
+			Send, {RButton Up}
+			Sleep, 100
+
+			message := "Button-Mouse index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+            
+			ACTUAL[INDEX] := state
+		}
+		sleep 10
+		
+	} else {
+		; MsgBox, is equal
+	}
+}
+
+
+
 PushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 	global ACTUAL
 	; unique number to store the current state
@@ -590,6 +652,92 @@ PushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 }
 
 
+; how to call a push to activate a key and then when release anothe key
+PushKeysReleaseOtherKeys(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
+	;good
+	global ACTUAL
+
+	; unique number to store the current state
+	INDEX := JOY AXIS
+
+	GetKeyState, state, %JOY%joy%AXIS%
+	
+	; ToolTip, Look %state% actual %ACTUAL% keydown %KEYDOWN% keyup %KEYUP%
+
+	;if a direction let's run the sequence and then erase the 
+	;if actual different then state make the change
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, Going forward
+			
+			parts := splitKeystrokes(KEYS_DOWN)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+		} else if (state = "U") {
+			; MsgBox, Going neutral
+			parts := splitKeystrokes(KEYS_UP)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+
+		}
+		
+	} else {
+		; MsgBox, is equal
+	}
+	; var := ACTUAL[INDEX]
+	; var := ACTUAL[48]
+	; MsgBox %var%
+}
+splitKeystrokes(keystrokes) {
+    tmp := explode("{", keystrokes)
+    ; print(tmp)
+    parts := Object()
+    For key, value in tmp {
+        if (value = "") {
+        } else {
+            parts.Push("{"value)
+        }
+    }
+    ; print(parts)
+    return %parts%
+}
+
+splitKey(keystroke) {
+    tmp := explode("{", keystroke)
+    tmp := explode(" ", tmp[2])
+    key := tmp[1]
+    tmp := explode("}", tmp[2])
+    typeOf := tmp[1]
+
+    ret := {"key": key, "typeOf": typeOf}
+    return %ret%
+}
 
 ; how to call a push to activate a key and then when release anothe key
 PushKeyReleaseAnotherKey(JOY, AXIS, KEYDOWN_START, KEYDOWN_MS, KEYDOWN_END, KEY_UP_START, KEY_UP_MS, KEY_UP_END) {
