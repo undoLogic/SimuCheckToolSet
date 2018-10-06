@@ -527,17 +527,26 @@ PovPushMouse(JOY, DIR, X_to, Y_to, X_back, Y_back) {
 			ACTUAL[INDEX] := state
 		}
 		
-	} else {
 		; MsgBox, is equal
 	}
 
 }
 
 moveMouse(X_to, Y_to) {
-	;DllCall("SetCursorPos", int, 0, int, 0) ; place cursor
+
+	;x := (A_ScreenWidth // 2)
+	;y := (A_ScreenHeight // 2)
+	;mousemove, x, y
+
+	;DllCall("SetCursorPos", int, 300, int, 300) ; place cursor
 	;DllCall("mouse_event", int, 0x0001, int, X_to, int, Y_to)
 	if (%KeyboardActive% == TRUE) {
-		DllCall("mouse_event", int, 0x0001, int, X_to, int, Y_to)
+		;DllCall("User32.dll\mouse_event", "UInt", 1, "UInt", -9999, "UInt", -9999, "UInt", 0, "UPtr", 0)
+		;DllCall("User32.dll\mouse_event", "UInt", 1, "UInt", X_to, "UInt", Y_to, "UInt", 0, "UPtr", 0)
+		; seems the best, however occasionally having issues
+		;DllCall("mouse_event", int, 0x0001, int, X_to, int, Y_to)
+		;getting weird issues with this where it goes waaay too far
+		MouseMove, X_to, Y_to, , R
 		Sleep, 500
 	} else {
 		;MsgBox, % "not active"
