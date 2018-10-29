@@ -12,8 +12,23 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 SetFormat, float, 03  ; Omit decimal point from axis position percentages.
 DEBUG = FALSE
+
 ; empty the log file
 deleteLog()
+
+; load gui
+Gui, Add, Link,, Choose profile to activate:
+Gui, Add, StatusBar,, Loading...
+SB_SetText("v:"VERSION " - " NAME ": Offline")
+Gui, Add, DropDownList, vCurrProfile, Offline|Online
+Gui, Add, Button, Default, Submit
+Gui,Add,Text,vJOYNAME w1000,% "Loading... " 
+Gui,Add,Text,vJOYAXIS w1000,% "Loading... " 
+Gui,Add,Text,vJOYBUTTONS w1000,% "Loading... " 
+Gui,Add,Button, gUp, Joy+
+Gui,Add,Button, gDown, Joy-
+Gui,Add,Button,gRestartScript,RELOAD
+Gui, Show, w300 h270, SimuCheck - %NAME%
 
 global JoystickNumber := 3
 
