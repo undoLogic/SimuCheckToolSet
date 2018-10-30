@@ -1139,28 +1139,28 @@ JoyStickCheck(JoystickNumber) {
 			buttons_down = %buttons_down%%A_Space%%A_Index%
     }
     GetKeyState, JoyX, %JoystickNumber%JoyX
-    axis_info = X%JoyX%
+    axis_info = JoyX: %JoyX%
     GetKeyState, JoyY, %JoystickNumber%JoyY
-    axis_info = %axis_info%%A_Space%%A_Space%Y%JoyY%
+    axis_info = %axis_info%%A_Space%%A_Space%JoyY: %JoyY%
     IfInString, joy_info, Z
     {
         GetKeyState, JoyZ, %JoystickNumber%JoyZ
-        axis_info = %axis_info%%A_Space%%A_Space%Z%JoyZ%
+        axis_info = %axis_info%%A_Space%%A_Space%JoyZ: %JoyZ%
     }
     IfInString, joy_info, R
     {
         GetKeyState, JoyR, %JoystickNumber%JoyR
-        axis_info = %axis_info%%A_Space%%A_Space%R%JoyR%
+        axis_info = %axis_info%%A_Space%%A_Space%JoyR: %JoyR%
     }
     IfInString, joy_info, U
     {
         GetKeyState, JoyU, %JoystickNumber%JoyU
-        axis_info = %axis_info%%A_Space%%A_Space%U%JoyU%
+        axis_info = %axis_info%%A_Space%%A_Space%JoyU: %JoyU%
     }
     IfInString, joy_info, V
     {
         GetKeyState, JoyV, %JoystickNumber%JoyV
-        axis_info = %axis_info%%A_Space%%A_Space%V%JoyV%
+        axis_info = %axis_info%%A_Space%%A_Space%JoyV: %JoyV%
     }
     IfInString, joy_info, P
     {
