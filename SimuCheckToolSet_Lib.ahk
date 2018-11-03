@@ -221,6 +221,51 @@ PushHoldBtn(JOY, AXIS, DNkey, UPkey) {
     } 
 }
 
+;Newer function with Axis, so it is clear functionality 
+AxisPushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
+    GetKeyState, state, %JOY%%AXIS%
+
+    global ACTUAL
+    INDEX := JOY AXIS
+
+
+    ; ToolTip,Horn %HornJoy% %state%
+    if (state > 65 && state <= 100) {
+            if (BOTTOM = "FALSE") {
+
+            } else {
+				;SendKeyWithDir(BOTTOM, "down")
+				SendKey(BOTTOM_DN)
+				
+             	;Send, % "{" BOTTOM " down}"    
+            }
+            ACTUAL[INDEX] := "LOW"     
+    } else if (state >= 21 && state <= 65) {
+        ; nothing
+        if (ACTUAL[INDEX] = "LOW") {
+            if (BOTTOM = "FALSE") {
+            } else {
+                ;SendKeyWithDir(BOTTOM, "up")
+				SendKey(BOTTOM_UP)
+				;Send, % "{" BOTTOM " up}"
+            }
+           ACTUAL[INDEX] := ""
+        } else if (ACTUAL[INDEX] = "HIGH") {
+            	;SendKeyWithDir(TOP, "up")
+				SendKey(TOP_UP)
+				
+				;Send, % "{" TOP " up}"
+            ACTUAL[INDEX] := ""
+        }
+    } else if (state >= 0 && state <= 20) {
+        	; SendKeyWithDir(TOP, "down")
+			SendKey(TOP_DN)
+			;Send, % "{" TOP " down}"
+        ACTUAL[INDEX] := "HIGH"
+    } 
+}
+
+; Depreciated use AxisPushHoldKeyTopOrBottom instead
 PushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
     GetKeyState, state, %JOY%%AXIS%
 
@@ -643,8 +688,70 @@ PushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 	}
 }
 
+; Use this call instead, clearer what it does 
+BtnPushKeysReleaseOtherKeys(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
+	;good
+	global ACTUAL
 
-; how to call a push to activate a key and then when release anothe key
+	; unique number to store the current state
+	INDEX := JOY AXIS
+
+	GetKeyState, state, %JOY%joy%AXIS%
+	
+	; ToolTip, Look %state% actual %ACTUAL% keydown %KEYDOWN% keyup %KEYUP%
+
+	;if a direction let's run the sequence and then erase the 
+	;if actual different then state make the change
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, Going forward
+			
+			parts := splitKeystrokes(KEYS_DOWN)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+		} else if (state = "U") {
+			; MsgBox, Going neutral
+			parts := splitKeystrokes(KEYS_UP)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+
+		}
+		
+	} else {
+		; MsgBox, is equal
+	}
+	; var := ACTUAL[INDEX]
+	; var := ACTUAL[48]
+	; MsgBox %var%
+}
+
+; Depreciated - how to call a push to activate a key and then when release anothe key
 PushKeysReleaseOtherKeys(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
 	;good
 	global ACTUAL
@@ -821,6 +928,128 @@ PushKey(JOY, AXIS, KEYDOWN_START, KEYDOWN_MS, KEYDOWN_END) {
 	}
 }
 
+; not done
+AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
+
+	global ACTUAL
+
+	;MsgBox, debug %DEBUG%
+
+	act := ACTUAL[INDEX]
+
+	INDEX := JOY AXIS
+
+	EACH_NOTCH := Round(100 / NOTCHES, 2)
+	; GetKeyState, state, %JOY%JoyZ
+	GetKeyState, state, %JOY%%AXIS%
+
+	CURR_NOTCH := 0
+	Loop, %NOTCHES%
+	{
+		bottom := (A_Index - 1) * EACH_NOTCH
+
+		top := (A_Index + 1) * EACH_NOTCH
+		if ((state >= bottom) && (state <= top)) {
+			CURR_NOTCH := (A_Index - 1)
+		} else {	
+			
+		}
+
+        if (DEBUG = "1") {
+	        Tooltip, currently %state% notches %NOTCHES% currNotch %CURR_NOTCH% notch %EACH_NOTCH% %bottom% - %top%  act %act% curr %CURR_NOTCH%
+            Sleep, 500
+        }
+	    
+		
+
+	}
+
+	; first time assign default
+	if (ACTUAL[INDEX] = "") {
+		ACTUAL[INDEX] := "1"
+		;act := ACTUAL[INDEX]
+		;MsgBox, setting %act%
+	} 
+	; MsgBox state is in %CURR_NOTCH%
+
+	; ; if a direction let's run the sequence and then erase the 
+	; ; if actual different then state make the change
+	if (ACTUAL[INDEX] != CURR_NOTCH) {
+
+		; MsgBox, NOT equal
+
+		if (ACTUAL[INDEX] < CURR_NOTCH) {
+			COUNT := 0
+			; MsgBox, Increase
+			Loop { ; increase throttle
+				
+
+					parts := splitKeystrokes(KEYS_INCREASE)
+					for key, value in parts {
+						keys := splitKey(value)
+						if (keys.key == "Sleep") {
+							delay := keys.typeOf
+							Sleep, %delay%
+						} else {
+							SendKeyWithDir(keys.key, keys.typeOf)
+						}
+					}
+
+					act := ACTUAL[INDEX]
+					; MsgBox, %act%
+					ACTUAL[INDEX] := act + 1 ; increase a notch
+
+					; MsgBox, Increase  act %act% curr %CURR_NOTCH%
+				if (ACTUAL[INDEX] = CURR_NOTCH) {
+					Break
+				}
+				COUNT := COUNT + 1
+				if (COUNT > NOTCHES) {
+					Break
+				}
+
+			}
+		} else if (ACTUAL[INDEX] > CURR_NOTCH) {
+			; decrease throttle
+			COUNT := 0
+			; MsgBox, Decrease
+			Loop { ; increase throttle
+
+					parts := splitKeystrokes(KEYS_DECREASE)
+					for key, value in parts {
+						keys := splitKey(value)
+						if (keys.key == "Sleep") {
+							delay := keys.typeOf
+							Sleep, %delay%
+						} else {
+							SendKeyWithDir(keys.key, keys.typeOf)
+						}
+					}
+
+				ACTUAL[INDEX] := ACTUAL[INDEX] - 1 ; increase a notch
+				; MsgBox, Decrease A %ThrottleActual% S %ThrottleState%
+				if (ACTUAL[INDEX] = CURR_NOTCH) {
+					Break
+				}
+
+				COUNT := COUNT + 1
+				if (COUNT > NOTCHES) {
+					Break
+				}
+			}
+		} else {
+			
+		}
+	} else {
+		; Else nothing
+		; MsgBox, equal
+	}
+
+	act := ACTUAL[INDEX]
+    ;ToolTip, currently %state% notches %NOTCHES% not %NOTCH% %bottom% - %top% ACTUAL %act%
+}
+
+; depreciated
 AxisToKey(JOY, AXIS, NOTCHES, KEYUP_START, KEYUP_MS, KEYUP_END, KEYUP_SLEEP_AFTER, KEYDOWN_START, KEYDOWN_MS, KEYDOWN_END, KEYDOWN_SLEEP_AFTER, DEBUG = FALSE) {
 
 	global ACTUAL
