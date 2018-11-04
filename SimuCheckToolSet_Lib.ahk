@@ -165,28 +165,38 @@ PovPushMouseWithKey(JOY, DIR, X_to, Y_to, X_back, Y_back, KEY) {
 		; MsgBox, is equal
 	}
 }
-
+AddToActivity(KEY, DIR = "") {
+	KEY := StrReplace(KEY, "{", "")
+	KEY := StrReplace(KEY, "}", "")
+	KEY := StrReplace(KEY, "down", "")
+	KEY := StrReplace(KEY, "up","UP")
+	KEY := StrReplace(KEY, " ", "")
+	KEY = %KEY%%DIR%
+	activity := KEY " " activity
+	activity := SubStr(activity, 1, 60)
+	GuiControl,,RECENT,% activity
+}
 SendKeyWithDir(KEY, DIR) {
 	;MsgBox, K is %KeyboardActive%
 	if (%KeyboardActive% == TRUE) {
 		if (DIR == "down") {
 			Send, % "{" KEY " down}"
+			AddToActivity(KEY, "")
 		} else {
 			Send, % "{" KEY " up}"
+			AddToActivity(KEY, "UP")
 		}
+		
 	} else {
 		;MsgBox, % "not active"
 	}
 }
-
+global activity := ""
 SendKey(KEY) {
 	;MsgBox, K is %KeyboardActive%
 	if (%KeyboardActive% == TRUE) {
-		if (DIR == "down") {
-			Send, % KEY
-		} else {
-			Send, % KEY
-		}
+		Send, % KEY
+		AddToActivity(KEY)
 	} else {
 		;MsgBox, % KEY
 	}
@@ -234,9 +244,12 @@ AxisPushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
             if (BOTTOM = "FALSE") {
 
             } else {
-				;SendKeyWithDir(BOTTOM, "down")
-				SendKey(BOTTOM_DN)
-				
+
+				if (BOTTOM_DN = "") {
+					
+				} else {
+					SendKey(BOTTOM_DN)
+				}
              	;Send, % "{" BOTTOM " down}"    
             }
             ACTUAL[INDEX] := "LOW"     
@@ -248,20 +261,26 @@ AxisPushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
                 ;SendKeyWithDir(BOTTOM, "up")
 				SendKey(BOTTOM_UP)
 				;Send, % "{" BOTTOM " up}"
-            }
-           ACTUAL[INDEX] := ""
+           		ACTUAL[INDEX] := ""
+		    }
         } else if (ACTUAL[INDEX] = "HIGH") {
-            	;SendKeyWithDir(TOP, "up")
-				SendKey(TOP_UP)
-				
-				;Send, % "{" TOP " up}"
-            ACTUAL[INDEX] := ""
+           	;SendKeyWithDir(TOP, "up")
+			SendKey(TOP_UP)
+			;Send, % "{" TOP " up}"
+           	ACTUAL[INDEX] := ""
         }
     } else if (state >= 0 && state <= 20) {
         	; SendKeyWithDir(TOP, "down")
-			SendKey(TOP_DN)
-			;Send, % "{" TOP " down}"
-        ACTUAL[INDEX] := "HIGH"
+			
+			if (ACTUAL[INDEX] = "HIGH") {
+				;; we already pushed it
+			} else if (TOP_DN = "") {
+					
+			} else {
+				;MsgBox, top
+				SendKey(TOP_DN)
+				ACTUAL[INDEX] := "HIGH"
+			}
     } 
 }
 
@@ -641,8 +660,52 @@ PushMouseRightBeforeAndAfter(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 	}
 }
 
+BtnPushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
+	global ACTUAL
+	; unique number to store the current state
+	INDEX := JOY AXIS
+	act := ACTUAL[INDEX]
 
+	GetKeyState, state, %JOY%joy%AXIS%
+	; ToolTip, state %state% actual %ACTUAL% x %X_to% y %Y_to% backX %X_to% backy %Y_to%
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, 
+			Send, {RButton Down}
+			Sleep, 100
+			moveMouse(X_to, Y_to)
+            ;MouseMove, %X_to%, %Y_to%, , R
+			;DllCall("mouse_event", int, 0x0001, int, X_to, int, Y_to)
+            Send, {RButton Up}
 
+			message := "Button-Mouse index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+			ACTUAL[INDEX] := state
+		} else if (state = "U") {
+			; MsgBox, 
+			Send, {RButton Down}
+			Sleep, 100
+			moveMouse(X_back, Y_back)
+            ;MouseMove, %X_back%, %Y_back%, , R
+			;.
+			;DllCall("mouse_event", int, 0x0001, int, X_back, int, Y_back)
+            Send, {RButton Up}
+
+			message := "Button-Mouse index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+            
+			ACTUAL[INDEX] := state
+		}
+		sleep 10
+		
+	} else {
+		; MsgBox, is equal
+	}
+}
+
+; Depreciated use BtnPushMouse instead
 PushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 	global ACTUAL
 	; unique number to store the current state
