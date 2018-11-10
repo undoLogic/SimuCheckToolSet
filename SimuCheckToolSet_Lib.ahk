@@ -751,6 +751,18 @@ PushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 	}
 }
 
+PressKeys(KEYS) {
+	parts := splitKeystrokes(KEYS)
+	for key, value in parts {
+		keys := splitKey(value)
+		if (keys.key == "Sleep") {
+			delay := keys.typeOf
+			Sleep, %delay%
+		} else {
+			SendKeyWithDir(keys.key, keys.typeOf)
+		}
+	}
+}
 ; Use this call instead, clearer what it does 
 BtnPushKeysReleaseOtherKeys(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
 	;good
