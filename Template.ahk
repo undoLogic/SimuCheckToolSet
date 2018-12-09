@@ -20,7 +20,7 @@ deleteLog()
 ; load gui
 
 Gui, Add, StatusBar,, Loading...
-SB_SetText("v:"VERSION " - " NAME ": Offline")
+SB_SetText("Offline")
 ;Gui, Add, DropDownList, vCurrProfile, Offline|Online
 Gui, Add, Checkbox, x10 y10 vActive gActive, Activate script
 
@@ -100,6 +100,7 @@ Active:
         TurnOff()
         KeyboardActive = FALSE
     } else {
+        TurnOn()
         KeyboardActive = TRUE
         ; activeProfile := newProfile
         ; MsgBox, % activeProfile
@@ -108,14 +109,14 @@ return ; end
 
 TurnOff() {
     ;uncheck active
-    SB_SetText("Choose a profile to begin")
+    SB_SetText("Offline")
     GuiControl,, Active, 0
     ;LV_Delete()
 }
 
 ; can't get variable to display
 TurnOn() {
-    SB_SetText("Active Profile: " DDPort)
+    SB_SetText("Profile Active")
     ;GuiControl,, Active, 1
 }
 

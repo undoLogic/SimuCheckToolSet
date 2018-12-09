@@ -21,6 +21,7 @@ Gui, Add, Link,, Choose profile to activate:
 Gui, Add, StatusBar,, Loading...
 SB_SetText("v:"VERSION " - " NAME ": Offline")
 Gui, Add, DropDownList, vCurrProfile, Offline|Online
+; Gui, Add, Checkbox, x+15 y12 vActive gActive, Active
 Gui, Add, Button, Default, Submit
 Gui,Add,Text,vJOYNAME w1000,% "Loading... " 
 Gui,Add,Text,vJOYAXIS w1000,% "Loading... " 
