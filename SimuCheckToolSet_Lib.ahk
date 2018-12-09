@@ -763,6 +763,84 @@ PressKeys(KEYS) {
 		}
 	}
 }
+
+; new call handles mouse and keyboard events on the same call 
+BtnPushReleaseOther(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
+	;good
+	global ACTUAL
+
+	; unique number to store the current state
+	INDEX := JOY AXIS
+
+	GetKeyState, state, %JOY%joy%AXIS%
+	
+	; ToolTip, Look %state% actual %ACTUAL% keydown %KEYDOWN% keyup %KEYUP%
+
+	;if a direction let's run the sequence and then erase the 
+	;if actual different then state make the change
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, Going forward
+			
+			parts := splitKeystrokes(KEYS_DOWN)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Mouse") {
+					movement := keys.typeOf
+					tmp := explode("/", movement)
+					x := tmp[1]
+					y := tmp[2]
+					moveMouse(x, y)
+				} else if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+		} else if (state = "U") {
+			; MsgBox, Going neutral
+			parts := splitKeystrokes(KEYS_UP)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Mouse") {
+					movement := keys.typeOf
+					tmp := explode("/", movement)
+					x := tmp[1]
+					y := tmp[2]
+					moveMouse(x, y)
+				} else if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+
+		}
+		
+	} else {
+		; MsgBox, is equal
+	}
+	; var := ACTUAL[INDEX]
+	; var := ACTUAL[48]
+	; MsgBox %var%
+}
+
+
+
 ; Use this call instead, clearer what it does 
 BtnPushKeysReleaseOtherKeys(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
 	;good
