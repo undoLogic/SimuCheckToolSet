@@ -15,7 +15,7 @@ Loop
 	Sleep, 50
 	
     ; Horn
-    PushHoldKeyTopOrBottom(5, "JoyY", "{Space down}", "{Space up}", "", "")
+    AxisPushHoldKeyTopOrBottom(5, "JoyY", "{Space down}", "{Space up}", "{b down}", "{b up}") 
 
     ; AWS
     PushKeyTopOrBottom(4, "JoyR", "q", "FALSE", 100)
