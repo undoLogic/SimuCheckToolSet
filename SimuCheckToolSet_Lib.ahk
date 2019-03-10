@@ -3,7 +3,7 @@ ACTUALACTIVE := {} ; holds the state of the buttons that is clicked currently
 WELCOME := "NO"
 
 global KeyboardActive = FALSE
-global logFile := "SimuCheck-Log.txt"
+global logFile := "SimuCheck.log"
 global logLife := 30000 ; how long the log will live for in milliseconds
 
 assertsTrue(check, against) {
@@ -18,9 +18,11 @@ writeToLog(message, newLine) {
     Sleep, 10
 	if (newLine = 1) {
         FileAppend,`n%message%,%logFile%
+		;msgBox, appendd
     } else {
         FileAppend,%message%,%logFile%
     }    
+	Sleep, 10
 }
 
 deleteLog() {
@@ -1086,6 +1088,7 @@ AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 
 	global ACTUAL
 
+	
 	;MsgBox, debug %DEBUG%
 
 	act := ACTUAL[INDEX]
@@ -1125,14 +1128,28 @@ AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 	} 
 	; MsgBox state is in %CURR_NOTCH%
 
+
+	
 	; ; if a direction let's run the sequence and then erase the 
 	; ; if actual different then state make the change
 	if (ACTUAL[INDEX] != CURR_NOTCH) {
 
+MAXNOTCH := (NOTCHES - 1)
 		; MsgBox, NOT equal
-
+; 		writeToLog(CURR_NOTCH,true)
+; writeToLog(" - ", false)
+; writeToLog(NOTCHES, false)
+; writeToLog(" - ", false)
+; writeToLog(ACTUAL[INDEX], false)
+; writeToLog(" mx ", false)
+; writeToLog(MAXNOTCH, false)
+; writeToLog(" | ", false)
 		if (ACTUAL[INDEX] < CURR_NOTCH) {
 			COUNT := 0
+
+			;writeToLog("- less - ", true)
+
+
 			; MsgBox, Increase
 			Loop { ; increase throttle
 				
@@ -1145,6 +1162,14 @@ AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 							Sleep, %delay%
 						} else {
 							SendKeyWithDir(keys.key, keys.typeOf)
+							writeToLog(keys.key, true)
+							;writeToLog(CURR_NOTCH,true)
+						
+							if (CURR_NOTCH == MAXNOTCH) {
+								;calibrate
+								SendKeyWithDir(keys.key, keys.typeOf)
+								writeToLog("Calibrating - top", true)
+							}
 						}
 					}
 
@@ -1166,6 +1191,9 @@ AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 			; decrease throttle
 			COUNT := 0
 			; MsgBox, Decrease
+
+			; MsgBox, Hi
+
 			Loop { ; increase throttle
 
 					parts := splitKeystrokes(KEYS_DECREASE)
@@ -1176,6 +1204,13 @@ AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 							Sleep, %delay%
 						} else {
 							SendKeyWithDir(keys.key, keys.typeOf)
+							writeToLog(keys.key, true)
+
+							if (CURR_NOTCH == 0) {
+								; calibrate
+								SendKeyWithDir(keys.key, keys.typeOf)
+								writeToLog("Calibrating - bottom", true)
+							}
 						}
 					}
 

@@ -1,40 +1,16 @@
+; Created by Simucheck / undoLogic.com / Sacha Lewis Dmytruk
 #SingleInstance
 #InstallMouseHook
 #Include SimuCheckToolSet_Lib.ahk
-; Created by Simucheck / undoLogic.com / Sacha Lewis Dmytruk
-; If you are interested to white-label our product please contact us
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 
-;ComObjCreate("SAPI.SpVoice").Speak("Simucheck.com")
-ComObjCreate("SAPI.SpVoice").Speak("World U S")
+; change to have it announce the name of this script
+ComObjCreate("SAPI.SpVoice").Speak("U S")
 
-; #Warn  ; Enable warnings to assist with detecting common errors.
-SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
-SetFormat, float, 03  ; Omit decimal point from axis position percentages.
-DEBUG = FALSE
+; gui head is required
+#Include gui-head.ahk
 
-; empty the log file
-deleteLog()
-
-; load gui
-Gui, Add, Link,, Choose profile to activate:
-Gui, Add, StatusBar,, Loading...
-SB_SetText("v:"VERSION " - " NAME ": Offline")
-Gui, Add, DropDownList, vCurrProfile, Offline|Online
-Gui, Add, Button, Default, Submit
-Gui,Add,Text,vJOYNAME w1000,% "Loading... " 
-Gui,Add,Text,vJOYAXIS w1000,% "Loading... " 
-Gui,Add,Text,vJOYBUTTONS w1000,% "Loading... " 
-Gui,Add,Button, gUp, Joy+
-Gui,Add,Button, gDown, Joy-
-Gui,Add,Button,gRestartScript,RELOAD
-Gui, Show, w300 h270, SimuCheck - %NAME%
-
-global JoystickNumber := 3
-
-writeToLog("Starting us", True)
-Loop                                                                        
+Loop                                  
 {
 	Sleep, 50
 	global ACTUAL
@@ -82,31 +58,6 @@ Loop
     JoyStickCheck(JoystickNumber)
 }
 
-; Buttons for the gui
-Up:
-JoystickNumber+=1
-return
-
-Down:
-JoystickNumber-=1
-return
-
-RestartScript:
-Reload
-return
-
-GuiClose:
-ExitApp 
-
-ButtonSubmit:
-Gui, Submit, NoHide
-;MsgBox,% CurrProfile KeyboardActive
-if (CurrProfile = "Online") {
-    KeyboardActive = TRUE
-} else {
-    KeyboardActive = FALSE
-}
-SB_SetText("Current Profile: " CurrProfile)
-return
-                            
+; footer required
+#Include gui-footer.ahk                 
 return

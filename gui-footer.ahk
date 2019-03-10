@@ -14,6 +14,11 @@ return
 GuiClose:
 ExitApp 
 
+Log:
+    SB_SetText("Opening Log in separate window")
+    Run SimuCheck-LogReader.ahk
+return
+
 Detect:
     SB_SetText("Opening Keyboard detect in separate window")
     Run SimuCheck-Keyboard-detect.ahk

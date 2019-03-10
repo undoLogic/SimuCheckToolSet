@@ -5,7 +5,7 @@
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 
 ; change to have it announce the name of this script
-ComObjCreate("SAPI.SpVoice").Speak(NAME)
+ComObjCreate("SAPI.SpVoice").Speak("1 6 6")
 
 ; gui head is required
 #Include gui-head.ahk
