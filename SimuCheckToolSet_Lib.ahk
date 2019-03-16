@@ -3,9 +3,403 @@ ACTUALACTIVE := {} ; holds the state of the buttons that is clicked currently
 WELCOME := "NO"
 
 global KeyboardActive = FALSE
-global logFile := "SimuCheck.log"
+global logFile := "assets/SimuCheck-Log.txt"
 global logLife := 30000 ; how long the log will live for in milliseconds
 
+;;;;;;;;;;;;;;;;;;;;;;;;; cleaned up code ;;;;;;;;;;
+
+BtnPushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
+	global ACTUAL
+	; unique number to store the current state
+	INDEX := JOY AXIS
+	act := ACTUAL[INDEX]
+
+	GetKeyState, state, %JOY%joy%AXIS%
+	; ToolTip, state %state% actual %ACTUAL% x %X_to% y %Y_to% backX %X_to% backy %Y_to%
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, 
+			; Send, {RButton Down}
+			SendMouse("RButton", "Down")
+			
+			Sleep, 100
+			moveMouse(X_to, Y_to)
+            ;MouseMove, %X_to%, %Y_to%, , R
+			;DllCall("mouse_event", int, 0x0001, int, X_to, int, Y_to)
+            ;Send, {RButton Up}
+			SendMouse("RButton", "Up")
+
+			message := "Button-Mouse index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+			ACTUAL[INDEX] := state
+		} else if (state = "U") {
+			; MsgBox, 
+			;Send, {RButton Down}
+			SendMouse("RButton", "Down")
+			Sleep, 100
+			moveMouse(X_back, Y_back)
+            ;MouseMove, %X_back%, %Y_back%, , R
+			;.
+			;DllCall("mouse_event", int, 0x0001, int, X_back, int, Y_back)
+            ;Send, {RButton Up}
+			SendMouse("RButton", "Up")
+
+			message := "Button-Mouse index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+            
+			ACTUAL[INDEX] := state
+		}
+		sleep 10
+		
+	} else {
+		; MsgBox, is equal
+	}
+}
+
+; new call handles mouse and keyboard events on the same call 
+BtnPushReleaseOther(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
+	;good
+	global ACTUAL
+
+	; unique number to store the current state
+	INDEX := JOY AXIS
+
+	GetKeyState, state, %JOY%joy%AXIS%
+	
+	; ToolTip, Look %state% actual %ACTUAL% keydown %KEYDOWN% keyup %KEYUP%
+
+	;if a direction let's run the sequence and then erase the 
+	;if actual different then state make the change
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, Going forward
+			
+			parts := splitKeystrokes(KEYS_DOWN)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Mouse") {
+					movement := keys.typeOf
+					tmp := explode("/", movement)
+					x := tmp[1]
+					y := tmp[2]
+					moveMouse(x, y)
+				} else if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+		} else if (state = "U") {
+			; MsgBox, Going neutral
+			parts := splitKeystrokes(KEYS_UP)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Mouse") {
+					movement := keys.typeOf
+					tmp := explode("/", movement)
+					x := tmp[1]
+					y := tmp[2]
+					moveMouse(x, y)
+				} else if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+
+		}
+		
+	} else {
+		; MsgBox, is equal
+	}
+	; var := ACTUAL[INDEX]
+	; var := ACTUAL[48]
+	; MsgBox %var%
+}
+
+; Use this call instead, clearer what it does 
+BtnPushKeysReleaseOtherKeys(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
+	;good
+	global ACTUAL
+
+	; unique number to store the current state
+	INDEX := JOY AXIS
+
+	GetKeyState, state, %JOY%joy%AXIS%
+	
+	; ToolTip, Look %state% actual %ACTUAL% keydown %KEYDOWN% keyup %KEYUP%
+
+	;if a direction let's run the sequence and then erase the 
+	;if actual different then state make the change
+	if (ACTUAL[INDEX] != state) {
+		; Different so let's make the change
+		if (state = "D") {
+			; MsgBox, Going forward
+			
+			parts := splitKeystrokes(KEYS_DOWN)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " PUSHED " 
+            writeToLog(message, 1)
+
+		} else if (state = "U") {
+			; MsgBox, Going neutral
+			parts := splitKeystrokes(KEYS_UP)
+			for key, value in parts {
+				keys := splitKey(value)
+				if (keys.key == "Sleep") {
+					delay := keys.typeOf
+					Sleep, %delay%
+				} else {
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+			}
+
+			ACTUAL[INDEX] := state
+
+			message := "Button-KeyWithAnother index:" INDEX " RELEASED " 
+            writeToLog(message, 1)
+
+		}
+		
+	} else {
+		; MsgBox, is equal
+	}
+	; var := ACTUAL[INDEX]
+	; var := ACTUAL[48]
+	; MsgBox %var%
+}
+
+;Newer function with Axis, so it is clear functionality 
+AxisPushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
+    GetKeyState, state, %JOY%%AXIS%
+
+    global ACTUAL
+    INDEX := JOY AXIS
+
+
+    ; ToolTip,Horn %HornJoy% %state%
+    if (state > 65 && state <= 100) {
+            if (BOTTOM = "FALSE") {
+
+            } else {
+
+				if (BOTTOM_DN = "") {
+					
+				} else {
+					SendKey(BOTTOM_DN)
+				}
+             	;Send, % "{" BOTTOM " down}"    
+            }
+            ACTUAL[INDEX] := "LOW"     
+    } else if (state >= 21 && state <= 65) {
+        ; nothing
+        if (ACTUAL[INDEX] = "LOW") {
+            if (BOTTOM = "FALSE") {
+            } else {
+                ;SendKeyWithDir(BOTTOM, "up")
+				SendKey(BOTTOM_UP)
+				;Send, % "{" BOTTOM " up}"
+           		ACTUAL[INDEX] := ""
+		    }
+        } else if (ACTUAL[INDEX] = "HIGH") {
+           	;SendKeyWithDir(TOP, "up")
+			SendKey(TOP_UP)
+			;Send, % "{" TOP " up}"
+           	ACTUAL[INDEX] := ""
+        }
+    } else if (state >= 0 && state <= 20) {
+        	; SendKeyWithDir(TOP, "down")
+			
+			if (ACTUAL[INDEX] = "HIGH") {
+				;; we already pushed it
+			} else if (TOP_DN = "") {
+					
+			} else {
+				;MsgBox, top
+				SendKey(TOP_DN)
+				ACTUAL[INDEX] := "HIGH"
+			}
+    } 
+}
+
+AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
+
+	global ACTUAL
+
+	;MsgBox, debug %DEBUG%
+
+	act := ACTUAL[INDEX]
+
+	INDEX := JOY AXIS
+
+	EACH_NOTCH := Round(100 / NOTCHES, 2)
+	; GetKeyState, state, %JOY%JoyZ
+	GetKeyState, state, %JOY%%AXIS%
+
+	CURR_NOTCH := 0
+	Loop, %NOTCHES%
+	{
+		bottom := (A_Index - 1) * EACH_NOTCH
+
+		top := (A_Index + 1) * EACH_NOTCH
+		if ((state >= bottom) && (state <= top)) {
+			CURR_NOTCH := (A_Index - 1)
+		} else {	
+			
+		}
+
+        if (DEBUG = "1") {
+	        Tooltip, currently %state% notches %NOTCHES% currNotch %CURR_NOTCH% notch %EACH_NOTCH% %bottom% - %top%  act %act% curr %CURR_NOTCH%
+            Sleep, 500
+        }
+	    
+	}
+
+	; first time assign default
+	if (ACTUAL[INDEX] = "") {
+		ACTUAL[INDEX] := "1"
+		;act := ACTUAL[INDEX]
+		;MsgBox, setting %act%
+	} 
+	; MsgBox state is in %CURR_NOTCH%
+
+	; ; if a direction let's run the sequence and then erase the 
+	; ; if actual different then state make the change
+	if (ACTUAL[INDEX] != CURR_NOTCH) {
+
+		; MsgBox, NOT equal
+
+		if (ACTUAL[INDEX] < CURR_NOTCH) {
+			COUNT := 0
+			; MsgBox, Increase
+			Loop { ; increase throttle
+				
+
+					parts := splitKeystrokes(KEYS_INCREASE)
+					for key, value in parts {
+						keys := splitKey(value)
+						if (keys.key == "Sleep") {
+							delay := keys.typeOf
+							Sleep, %delay%
+						} else {
+							SendKeyWithDir(keys.key, keys.typeOf)
+						}
+					}
+
+					act := ACTUAL[INDEX]
+					; MsgBox, %act%
+					ACTUAL[INDEX] := act + 1 ; increase a notch
+
+					; MsgBox, Increase  act %act% curr %CURR_NOTCH%
+				if (ACTUAL[INDEX] = CURR_NOTCH) {
+					Break
+				}
+				COUNT := COUNT + 1
+				if (COUNT > NOTCHES) {
+					Break
+				}
+
+			}
+		} else if (ACTUAL[INDEX] > CURR_NOTCH) {
+			; decrease throttle
+			COUNT := 0
+			; MsgBox, Decrease
+			Loop { ; increase throttle
+
+					parts := splitKeystrokes(KEYS_DECREASE)
+					for key, value in parts {
+						keys := splitKey(value)
+						if (keys.key == "Sleep") {
+							delay := keys.typeOf
+							Sleep, %delay%
+						} else {
+							SendKeyWithDir(keys.key, keys.typeOf)
+						}
+					}
+
+				ACTUAL[INDEX] := ACTUAL[INDEX] - 1 ; increase a notch
+				; MsgBox, Decrease A %ThrottleActual% S %ThrottleState%
+				if (ACTUAL[INDEX] = CURR_NOTCH) {
+					Break
+				}
+
+				COUNT := COUNT + 1
+				if (COUNT > NOTCHES) {
+					Break
+				}
+			}
+		} else {
+			
+		}
+	} else {
+		; Else nothing
+		; MsgBox, equal
+	}
+
+	act := ACTUAL[INDEX]
+    ;ToolTip, currently %state% notches %NOTCHES% not %NOTCH% %bottom% - %top% ACTUAL %act%
+}
+
+SendMouse(BTN, DIR) {
+	if (%KeyboardActive% == TRUE) {
+		Send, % "{" BTN " " DIR "}"
+		;Send, {RButton Down}
+	}
+}
+SendKeyWithDir(KEY, DIR) {
+	;MsgBox, K is %KeyboardActive%
+	if (%KeyboardActive% == TRUE) {
+		if (DIR == "down") {
+			Send, % "{" KEY " down}"
+			AddToActivity(KEY, "")
+		} else {
+			Send, % "{" KEY " up}"
+			AddToActivity(KEY, "UP")
+		}
+		
+	} else {
+		;MsgBox, % "not active"
+	}
+}
+global activity := ""
+SendKey(KEY) {
+	;MsgBox, K is %KeyboardActive%
+	if (%KeyboardActive% == TRUE) {
+		Send, % KEY
+		AddToActivity(KEY)
+	} else {
+		;MsgBox, % KEY
+	}
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;; end of new code ;;; below is not cleaned up
 assertsTrue(check, against) {
     if (check) == (against) {
         ;MsgBox it is true
@@ -18,23 +412,13 @@ writeToLog(message, newLine) {
     Sleep, 10
 	if (newLine = 1) {
         FileAppend,`n%message%,%logFile%
-		;msgBox, appendd
     } else {
         FileAppend,%message%,%logFile%
     }    
-	Sleep, 10
 }
 
 deleteLog() {
 	FileDelete,%A_ScriptDir%\%logFile%
-}
-
-pr(array) {
-	MsgBox, Hi
-    if IsArray(array) {
-        array := arrayToString(array)
-    }
-    MsgBox %array%
 }
 
 print(array) {
@@ -186,31 +570,8 @@ AddToActivity(KEY, DIR = "") {
 	activity := SubStr(activity, 1, 60)
 	GuiControl,,RECENT,% activity
 }
-SendKeyWithDir(KEY, DIR) {
-	;MsgBox, K is %KeyboardActive%
-	if (%KeyboardActive% == TRUE) {
-		if (DIR == "down") {
-			Send, % "{" KEY " down}"
-			AddToActivity(KEY, "")
-		} else {
-			Send, % "{" KEY " up}"
-			AddToActivity(KEY, "UP")
-		}
-		
-	} else {
-		;MsgBox, % "not active"
-	}
-}
-global activity := ""
-SendKey(KEY) {
-	;MsgBox, K is %KeyboardActive%
-	if (%KeyboardActive% == TRUE) {
-		Send, % KEY
-		AddToActivity(KEY)
-	} else {
-		;MsgBox, % KEY
-	}
-}
+
+
 
 PushHoldBtn(JOY, AXIS, DNkey, UPkey) {
 	
@@ -241,58 +602,7 @@ PushHoldBtn(JOY, AXIS, DNkey, UPkey) {
     } 
 }
 
-;Newer function with Axis, so it is clear functionality 
-AxisPushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
-    GetKeyState, state, %JOY%%AXIS%
 
-    global ACTUAL
-    INDEX := JOY AXIS
-
-
-    ; ToolTip,Horn %HornJoy% %state%
-    if (state > 65 && state <= 100) {
-            if (BOTTOM = "FALSE") {
-
-            } else {
-
-				if (BOTTOM_DN = "") {
-					
-				} else {
-					SendKey(BOTTOM_DN)
-				}
-             	;Send, % "{" BOTTOM " down}"    
-            }
-            ACTUAL[INDEX] := "LOW"     
-    } else if (state >= 21 && state <= 65) {
-        ; nothing
-        if (ACTUAL[INDEX] = "LOW") {
-            if (BOTTOM = "FALSE") {
-            } else {
-                ;SendKeyWithDir(BOTTOM, "up")
-				SendKey(BOTTOM_UP)
-				;Send, % "{" BOTTOM " up}"
-           		ACTUAL[INDEX] := ""
-		    }
-        } else if (ACTUAL[INDEX] = "HIGH") {
-           	;SendKeyWithDir(TOP, "up")
-			SendKey(TOP_UP)
-			;Send, % "{" TOP " up}"
-           	ACTUAL[INDEX] := ""
-        }
-    } else if (state >= 0 && state <= 20) {
-        	; SendKeyWithDir(TOP, "down")
-			
-			if (ACTUAL[INDEX] = "HIGH") {
-				;; we already pushed it
-			} else if (TOP_DN = "") {
-					
-			} else {
-				;MsgBox, top
-				SendKey(TOP_DN)
-				ACTUAL[INDEX] := "HIGH"
-			}
-    } 
-}
 
 ; Depreciated use AxisPushHoldKeyTopOrBottom instead
 PushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
@@ -334,7 +644,6 @@ PushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
         ACTUAL[INDEX] := "HIGH"
     } 
 }
-
 
 PushKeyTopOrBottom(JOY, AXIS, TOP, BOTTOM, MS) {
      GetKeyState, state, %JOY%%AXIS%
@@ -610,7 +919,6 @@ moveMouse(X_to, Y_to) {
 	}	
 }
 
-
 PushMouseRightBeforeAndAfter(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 	global ACTUAL
 	; unique number to store the current state
@@ -657,51 +965,6 @@ PushMouseRightBeforeAndAfter(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
 			Sleep, 100
 			Send, {RButton Up}
 			Sleep, 100
-
-			message := "Button-Mouse index:" INDEX " RELEASED " 
-            writeToLog(message, 1)
-            
-			ACTUAL[INDEX] := state
-		}
-		sleep 10
-		
-	} else {
-		; MsgBox, is equal
-	}
-}
-
-BtnPushMouse(JOY, AXIS, X_to, Y_to, X_back, Y_back) {
-	global ACTUAL
-	; unique number to store the current state
-	INDEX := JOY AXIS
-	act := ACTUAL[INDEX]
-
-	GetKeyState, state, %JOY%joy%AXIS%
-	; ToolTip, state %state% actual %ACTUAL% x %X_to% y %Y_to% backX %X_to% backy %Y_to%
-	if (ACTUAL[INDEX] != state) {
-		; Different so let's make the change
-		if (state = "D") {
-			; MsgBox, 
-			Send, {RButton Down}
-			Sleep, 100
-			moveMouse(X_to, Y_to)
-            ;MouseMove, %X_to%, %Y_to%, , R
-			;DllCall("mouse_event", int, 0x0001, int, X_to, int, Y_to)
-            Send, {RButton Up}
-
-			message := "Button-Mouse index:" INDEX " PUSHED " 
-            writeToLog(message, 1)
-
-			ACTUAL[INDEX] := state
-		} else if (state = "U") {
-			; MsgBox, 
-			Send, {RButton Down}
-			Sleep, 100
-			moveMouse(X_back, Y_back)
-            ;MouseMove, %X_back%, %Y_back%, , R
-			;.
-			;DllCall("mouse_event", int, 0x0001, int, X_back, int, Y_back)
-            Send, {RButton Up}
 
 			message := "Button-Mouse index:" INDEX " RELEASED " 
             writeToLog(message, 1)
@@ -772,146 +1035,6 @@ PressKeys(KEYS) {
 			SendKeyWithDir(keys.key, keys.typeOf)
 		}
 	}
-}
-
-; new call handles mouse and keyboard events on the same call 
-BtnPushReleaseOther(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
-	;good
-	global ACTUAL
-
-	; unique number to store the current state
-	INDEX := JOY AXIS
-
-	GetKeyState, state, %JOY%joy%AXIS%
-	
-	; ToolTip, Look %state% actual %ACTUAL% keydown %KEYDOWN% keyup %KEYUP%
-
-	;if a direction let's run the sequence and then erase the 
-	;if actual different then state make the change
-	if (ACTUAL[INDEX] != state) {
-		; Different so let's make the change
-		if (state = "D") {
-			; MsgBox, Going forward
-			
-			parts := splitKeystrokes(KEYS_DOWN)
-			for key, value in parts {
-				keys := splitKey(value)
-				if (keys.key == "Mouse") {
-					movement := keys.typeOf
-					tmp := explode("/", movement)
-					x := tmp[1]
-					y := tmp[2]
-					moveMouse(x, y)
-				} else if (keys.key == "Sleep") {
-					delay := keys.typeOf
-					Sleep, %delay%
-				} else {
-					SendKeyWithDir(keys.key, keys.typeOf)
-				}
-			}
-
-			ACTUAL[INDEX] := state
-
-			message := "Button-KeyWithAnother index:" INDEX " PUSHED " 
-            writeToLog(message, 1)
-
-		} else if (state = "U") {
-			; MsgBox, Going neutral
-			parts := splitKeystrokes(KEYS_UP)
-			for key, value in parts {
-				keys := splitKey(value)
-				if (keys.key == "Mouse") {
-					movement := keys.typeOf
-					tmp := explode("/", movement)
-					x := tmp[1]
-					y := tmp[2]
-					moveMouse(x, y)
-				} else if (keys.key == "Sleep") {
-					delay := keys.typeOf
-					Sleep, %delay%
-				} else {
-					SendKeyWithDir(keys.key, keys.typeOf)
-				}
-			}
-
-			ACTUAL[INDEX] := state
-
-			message := "Button-KeyWithAnother index:" INDEX " RELEASED " 
-            writeToLog(message, 1)
-
-		}
-		
-	} else {
-		; MsgBox, is equal
-	}
-	; var := ACTUAL[INDEX]
-	; var := ACTUAL[48]
-	; MsgBox %var%
-}
-
-
-
-; Use this call instead, clearer what it does 
-BtnPushKeysReleaseOtherKeys(JOY, AXIS, KEYS_DOWN, KEYS_UP) {
-	;good
-	global ACTUAL
-
-	; unique number to store the current state
-	INDEX := JOY AXIS
-
-	GetKeyState, state, %JOY%joy%AXIS%
-	
-	; ToolTip, Look %state% actual %ACTUAL% keydown %KEYDOWN% keyup %KEYUP%
-
-	;if a direction let's run the sequence and then erase the 
-	;if actual different then state make the change
-	if (ACTUAL[INDEX] != state) {
-		; Different so let's make the change
-		if (state = "D") {
-			; MsgBox, Going forward
-			
-			parts := splitKeystrokes(KEYS_DOWN)
-			for key, value in parts {
-				keys := splitKey(value)
-				if (keys.key == "Sleep") {
-					delay := keys.typeOf
-					Sleep, %delay%
-				} else {
-					SendKeyWithDir(keys.key, keys.typeOf)
-				}
-			}
-
-			ACTUAL[INDEX] := state
-
-			message := "Button-KeyWithAnother index:" INDEX " PUSHED " 
-            writeToLog(message, 1)
-
-		} else if (state = "U") {
-			; MsgBox, Going neutral
-			parts := splitKeystrokes(KEYS_UP)
-			for key, value in parts {
-				keys := splitKey(value)
-				if (keys.key == "Sleep") {
-					delay := keys.typeOf
-					Sleep, %delay%
-				} else {
-					SendKeyWithDir(keys.key, keys.typeOf)
-				}
-			}
-
-			ACTUAL[INDEX] := state
-
-			message := "Button-KeyWithAnother index:" INDEX " RELEASED " 
-            writeToLog(message, 1)
-
-		}
-		
-	} else {
-		; MsgBox, is equal
-	}
-	; var := ACTUAL[INDEX]
-	; var := ACTUAL[48]
-	; MsgBox %var%
 }
 
 ; Depreciated - how to call a push to activate a key and then when release anothe key
@@ -1091,159 +1214,6 @@ PushKey(JOY, AXIS, KEYDOWN_START, KEYDOWN_MS, KEYDOWN_END) {
 	}
 }
 
-; not done
-AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
-
-	global ACTUAL
-
-	
-	;MsgBox, debug %DEBUG%
-
-	act := ACTUAL[INDEX]
-
-	INDEX := JOY AXIS
-
-	EACH_NOTCH := Round(100 / NOTCHES, 2)
-	; GetKeyState, state, %JOY%JoyZ
-	GetKeyState, state, %JOY%%AXIS%
-
-	CURR_NOTCH := 0
-	Loop, %NOTCHES%
-	{
-		bottom := (A_Index - 1) * EACH_NOTCH
-
-		top := (A_Index + 1) * EACH_NOTCH
-		if ((state >= bottom) && (state <= top)) {
-			CURR_NOTCH := (A_Index - 1)
-		} else {	
-			
-		}
-
-        if (DEBUG = "1") {
-	        Tooltip, currently %state% notches %NOTCHES% currNotch %CURR_NOTCH% notch %EACH_NOTCH% %bottom% - %top%  act %act% curr %CURR_NOTCH%
-            Sleep, 500
-        }
-	    
-		
-
-	}
-
-	; first time assign default
-	if (ACTUAL[INDEX] = "") {
-		ACTUAL[INDEX] := "1"
-		;act := ACTUAL[INDEX]
-		;MsgBox, setting %act%
-	} 
-	; MsgBox state is in %CURR_NOTCH%
-
-
-	
-	; ; if a direction let's run the sequence and then erase the 
-	; ; if actual different then state make the change
-	if (ACTUAL[INDEX] != CURR_NOTCH) {
-
-MAXNOTCH := (NOTCHES - 1)
-		; MsgBox, NOT equal
-; 		writeToLog(CURR_NOTCH,true)
-; writeToLog(" - ", false)
-; writeToLog(NOTCHES, false)
-; writeToLog(" - ", false)
-; writeToLog(ACTUAL[INDEX], false)
-; writeToLog(" mx ", false)
-; writeToLog(MAXNOTCH, false)
-; writeToLog(" | ", false)
-		if (ACTUAL[INDEX] < CURR_NOTCH) {
-			COUNT := 0
-
-			;writeToLog("- less - ", true)
-
-
-			; MsgBox, Increase
-			Loop { ; increase throttle
-				
-
-					parts := splitKeystrokes(KEYS_INCREASE)
-					for key, value in parts {
-						keys := splitKey(value)
-						if (keys.key == "Sleep") {
-							delay := keys.typeOf
-							Sleep, %delay%
-						} else {
-							SendKeyWithDir(keys.key, keys.typeOf)
-							writeToLog(keys.key, true)
-							;writeToLog(CURR_NOTCH,true)
-						
-							if (CURR_NOTCH == MAXNOTCH) {
-								;calibrate
-								SendKeyWithDir(keys.key, keys.typeOf)
-								writeToLog("Calibrating - top", true)
-							}
-						}
-					}
-
-					act := ACTUAL[INDEX]
-					; MsgBox, %act%
-					ACTUAL[INDEX] := act + 1 ; increase a notch
-
-					; MsgBox, Increase  act %act% curr %CURR_NOTCH%
-				if (ACTUAL[INDEX] = CURR_NOTCH) {
-					Break
-				}
-				COUNT := COUNT + 1
-				if (COUNT > NOTCHES) {
-					Break
-				}
-
-			}
-		} else if (ACTUAL[INDEX] > CURR_NOTCH) {
-			; decrease throttle
-			COUNT := 0
-			; MsgBox, Decrease
-
-			; MsgBox, Hi
-
-			Loop { ; increase throttle
-
-					parts := splitKeystrokes(KEYS_DECREASE)
-					for key, value in parts {
-						keys := splitKey(value)
-						if (keys.key == "Sleep") {
-							delay := keys.typeOf
-							Sleep, %delay%
-						} else {
-							SendKeyWithDir(keys.key, keys.typeOf)
-							writeToLog(keys.key, true)
-
-							if (CURR_NOTCH == 0) {
-								; calibrate
-								SendKeyWithDir(keys.key, keys.typeOf)
-								writeToLog("Calibrating - bottom", true)
-							}
-						}
-					}
-
-				ACTUAL[INDEX] := ACTUAL[INDEX] - 1 ; increase a notch
-				; MsgBox, Decrease A %ThrottleActual% S %ThrottleState%
-				if (ACTUAL[INDEX] = CURR_NOTCH) {
-					Break
-				}
-
-				COUNT := COUNT + 1
-				if (COUNT > NOTCHES) {
-					Break
-				}
-			}
-		} else {
-			
-		}
-	} else {
-		; Else nothing
-		; MsgBox, equal
-	}
-
-	act := ACTUAL[INDEX]
-    ;ToolTip, currently %state% notches %NOTCHES% not %NOTCH% %bottom% - %top% ACTUAL %act%
-}
 
 ; depreciated
 AxisToKey(JOY, AXIS, NOTCHES, KEYUP_START, KEYUP_MS, KEYUP_END, KEYUP_SLEEP_AFTER, KEYDOWN_START, KEYDOWN_MS, KEYDOWN_END, KEYDOWN_SLEEP_AFTER, DEBUG = FALSE) {
