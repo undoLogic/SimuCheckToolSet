@@ -3,7 +3,7 @@ ACTUALACTIVE := {} ; holds the state of the buttons that is clicked currently
 WELCOME := "NO"
 
 global KeyboardActive = FALSE
-global logFile := "assets/SimuCheck-Log.txt"
+global logFile := "assets/SimuCheck.log"
 global logLife := 30000 ; how long the log will live for in milliseconds
 
 ;;;;;;;;;;;;;;;;;;;;;;;;; cleaned up code ;;;;;;;;;;
