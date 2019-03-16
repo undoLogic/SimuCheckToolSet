@@ -29,6 +29,14 @@ deleteLog() {
 	FileDelete,%A_ScriptDir%\%logFile%
 }
 
+pr(array) {
+	MsgBox, Hi
+    if IsArray(array) {
+        array := arrayToString(array)
+    }
+    MsgBox %array%
+}
+
 print(array) {
     if IsArray(array) {
         array := arrayToString(array)
