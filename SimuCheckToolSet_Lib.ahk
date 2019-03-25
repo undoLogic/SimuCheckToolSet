@@ -1,3 +1,19 @@
+;	Created by Sacha-Lewis Dmytruk
+;	SimuCheck / undoLogic
+
+;	This program is free software: you can redistribute it and/or modify
+;   it under the terms of the Lesser GNU General Public License as published by
+;   the Free Software Foundation, either version 3 of the License, or
+;   (at your option) any later version.
+
+;   This program is distributed in the hope that it will be useful,
+;   but WITHOUT ANY WARRANTY; without even the implied warranty of
+;   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;   GNU General Public License for more details.
+
+;   You should have received a copy of the GNU General Public License
+;   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ACTUAL := {} ; holds the state of the buttons / axis
 ACTUALACTIVE := {} ; holds the state of the buttons that is clicked currently
 WELCOME := "NO"
@@ -252,17 +268,14 @@ AxisPushHoldKeyTopOrBottom(JOY, AXIS, TOP_DN, TOP_UP, BOTTOM_DN, BOTTOM_UP) {
 AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 
 	global ACTUAL
-
-	;MsgBox, debug %DEBUG%
-
 	act := ACTUAL[INDEX]
-
 	INDEX := JOY AXIS
 
 	EACH_NOTCH := Round(100 / NOTCHES, 2)
 	; GetKeyState, state, %JOY%JoyZ
 	GetKeyState, state, %JOY%%AXIS%
 
+	TOP_NOTCH := NOTCHES - 1
 	CURR_NOTCH := 0
 	Loop, %NOTCHES%
 	{
@@ -290,42 +303,54 @@ AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 	} 
 	; MsgBox state is in %CURR_NOTCH%
 
+	act := ACTUAL[INDEX]
+	;print(act)
+	
 	; ; if a direction let's run the sequence and then erase the 
 	; ; if actual different then state make the change
 	if (ACTUAL[INDEX] != CURR_NOTCH) {
 
 		; MsgBox, NOT equal
+		writeToLog("CurrNotch: " CURR_NOTCH " / act: " act " / notches: " NOTCHES " index: " INDEX, true)
 
 		if (ACTUAL[INDEX] < CURR_NOTCH) {
 			COUNT := 0
 			; MsgBox, Increase
 			Loop { ; increase throttle
 				
-
-					parts := splitKeystrokes(KEYS_INCREASE)
-					for key, value in parts {
-						keys := splitKey(value)
-						if (keys.key == "Sleep") {
-							delay := keys.typeOf
-							Sleep, %delay%
-						} else {
-							SendKeyWithDir(keys.key, keys.typeOf)
-						}
+				parts := splitKeystrokes(KEYS_INCREASE)
+				for key, value in parts {
+					keys := splitKey(value)
+					if (keys.key == "Sleep") {
+						delay := keys.typeOf
+						Sleep, %delay%
+					} else {
+						SendKeyWithDir(keys.key, keys.typeOf)							
 					}
+				}
 
-					act := ACTUAL[INDEX]
-					; MsgBox, %act%
-					ACTUAL[INDEX] := act + 1 ; increase a notch
+				act := ACTUAL[INDEX]
+				; MsgBox, %act%
+
+				if (TOP_NOTCH = CURR_NOTCH) {
+					; calibrate
+					writeToLog(" calibrating (running key again - top) ", true)
+					SendKeyWithDir(keys.key, keys.typeOf)
+					Sleep, 50
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+
+				ACTUAL[INDEX] := act + 1 ; increase a notch
 
 					; MsgBox, Increase  act %act% curr %CURR_NOTCH%
-				if (ACTUAL[INDEX] = CURR_NOTCH) {
+				if (ACTUAL[INDEX] == CURR_NOTCH) {
 					Break
 				}
+
 				COUNT := COUNT + 1
 				if (COUNT > NOTCHES) {
 					Break
 				}
-
 			}
 		} else if (ACTUAL[INDEX] > CURR_NOTCH) {
 			; decrease throttle
@@ -333,20 +358,32 @@ AxisToKeysNotches(JOY, AXIS, NOTCHES, KEYS_INCREASE, KEYS_DECREASE) {
 			; MsgBox, Decrease
 			Loop { ; increase throttle
 
-					parts := splitKeystrokes(KEYS_DECREASE)
-					for key, value in parts {
-						keys := splitKey(value)
-						if (keys.key == "Sleep") {
-							delay := keys.typeOf
-							Sleep, %delay%
-						} else {
-							SendKeyWithDir(keys.key, keys.typeOf)
-						}
+				parts := splitKeystrokes(KEYS_DECREASE)
+				for key, value in parts {
+					keys := splitKey(value)
+					if (keys.key == "Sleep") {
+						delay := keys.typeOf
+						Sleep, %delay%
+					} else {
+						SendKeyWithDir(keys.key, keys.typeOf)
+
 					}
+				}
 
 				ACTUAL[INDEX] := ACTUAL[INDEX] - 1 ; increase a notch
+				
+				act := ACTUAL[INDEX]
+				
+				if (act == 0) {
+					; calibrate
+					writeToLog(" calibrating (running key again - 0) ", true)
+					SendKeyWithDir(keys.key, keys.typeOf)
+					Sleep, 50
+					SendKeyWithDir(keys.key, keys.typeOf)
+				}
+
 				; MsgBox, Decrease A %ThrottleActual% S %ThrottleState%
-				if (ACTUAL[INDEX] = CURR_NOTCH) {
+				if (ACTUAL[INDEX] == CURR_NOTCH) {
 					Break
 				}
 
@@ -394,6 +431,7 @@ SendKey(KEY) {
 	if (%KeyboardActive% == TRUE) {
 		Send, % KEY
 		AddToActivity(KEY)
+		writeToLog("SendKey " KEY, true)
 	} else {
 		;MsgBox, % KEY
 	}
