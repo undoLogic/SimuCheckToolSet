@@ -1,8 +1,7 @@
 # SimuCheckToolSet
 Use our SimuCheck ToolSet to increase your immersion into your simulator. Our ToolSet allows to interface your joysticks and mouse into specific commands that control your Simulator.
 
-### Please consider supporting us on Patreon - Thank you ! 
-https://www.patreon.com/simucheck/
+### Please consider supporting us on Patreon - Thank you! - https://www.patreon.com/simucheck/
 
 Usage:
 1. Download all files
